@@ -1,14 +1,14 @@
 # bot.py
 import os
 
-import discord, random
+import discord, random, aiocron
 from dotenv import load_dotenv
 from discord.ext import commands
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-bot = commands.Bot(command_prefix='ml!')
+bot = commands.Bot(command_prefix='??')
 
 @bot.event
 async def on_ready():
@@ -30,5 +30,16 @@ async def nine_nine(ctx):
     response = random.choice(brooklyn_99_quotes)
     await ctx.send(response)
     
+@bot.command(name="ping", help='Ping Pong')
+async def ping(ctx):
+    response = 'Pong !'
+
+    await ctx.send(response)
+
+# True cron date 30 19 */1 * *
+@aiocron.crontab('* * * * *')
+async def cronJob():
+    print("Pomme")
+
 
 bot.run(TOKEN)
