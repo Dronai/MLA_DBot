@@ -1,45 +1,39 @@
 # bot.py
 import os
 
-import discord, random, aiocron
+import discord, random, aiocron, mysql.connector
+from DefaultCog import *
+from SchedulesCog import *
 from dotenv import load_dotenv
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.Bot(command_prefix='??')
+bot.add_cog(DefaultCog(bot))
+bot.add_cog(SchedulesCog(bot))
 
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
-@bot.command(name="99", help='Respond a random sentence eheheh')
-async def nine_nine(ctx):
+@bot.event
+async def on_reaction_add(reaction, user):
+    print("Reaction ajouté Bro !")
+    print(reaction.emoji)
+    print(reaction.message.content)
+    print(user.id)
+
+##-----------------------------------------------
+##-----------------------------------------------
+##-----------------------------------------------
     
-    brooklyn_99_quotes = [
-        'I\'m the human form of the 💯 emoji.',
-        'Bingpot!',
-        '99!',
-        (
-            'Cool. Cool cool cool cool cool cool cool, '
-            'no doubt no doubt no doubt no doubt.'
-        ),
-    ]
-
-    response = random.choice(brooklyn_99_quotes)
-    await ctx.send(response)
-    
-@bot.command(name="ping", help='Ping Pong')
-async def ping(ctx):
-    response = 'Pong !'
-
-    await ctx.send(response)
-
 # True cron date 30 19 */1 * *
-@aiocron.crontab('* * * * *')
+@aiocron.crontab('*/1 * * * *')
 async def cronJob():
-    print("Pomme")
-
+    #user = bot.get_user('176264765214162944')
+    #await user.send('??Mood\n08.01.2021\nBonjour, comment s\'est passé ta journée ?')
+    print("LOL")
 
 bot.run(TOKEN)
