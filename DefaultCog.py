@@ -31,12 +31,6 @@ class DefaultCog(commands.Cog):
 
         await ctx.send(response)
 
-    @commands.command(pass_context = True, name="sub", help='Subscription to the Mood\s Alert')
-    async def subscription(self, ctx):
-        print(ctx)
-        print(ctx.author.name)
-        print(ctx.author.id)
-
         #get user with his id and send question of mood 
         await self.bot.get_user(ctx.author.id).send('Lolilol')
         userDro = self.bot.get_user(176264765214162944)
