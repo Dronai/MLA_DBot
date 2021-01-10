@@ -1,7 +1,8 @@
 from discord.ext import commands, tasks
 from discord import Embed
-import datetime
+import datetime, mysql.connector
 
+# Il faut lancer la commande 'loaduser' au démarage du bot pour charger les utilisateurs de la base de données.
 class SchedulesCog(commands.Cog):
 
 	REACTION = {
@@ -17,20 +18,39 @@ class SchedulesCog(commands.Cog):
 		}
 
 	BUFFER = []
-	HOUR = 16
+	HOUR = 21
 	REGISTER = []
+	REGISTER_ID = []
+	FIRSTLOOP = False
 
-	def __init__(self, bot):
-		self.index = 0
+	def __init__(self, bot, db):
 		self.bot = bot
+		self.db = db
+		self.dbCursor = db.cursor()
 		self.refaced()
+		self.loaduser()
+
+	def loaduser(self):
+		sql = "SELECT * FROM users"
+		self.dbCursor.execute(sql)
+
+		SchedulesCog.REGISTER_ID.clear()
+
+		SchedulesCog.REGISTER = self.dbCursor.fetchall()
+		for user in SchedulesCog.REGISTER:
+			SchedulesCog.REGISTER_ID.append(int(user[0]))
+
+		print((str(len(SchedulesCog.REGISTER)) + " users load"))
 
 	def cog_unload(self):
 		self.printer.cancel()
 
 	@tasks.loop(seconds=5.0)
 	async def printer(self):
-		await self.pomme()
+		if SchedulesCog.FIRSTLOOP == False:
+			await self.pomme()
+		else:
+			SchedulesCog.FIRSTLOOP = False
 
 	@commands.command()
 	async def pomme(self, ctx=None):
@@ -43,21 +63,41 @@ class SchedulesCog(commands.Cog):
 			message = await _ctx.send(embed=embed)
 			SchedulesCog.BUFFER.append(message.id)
 			await self.set_reaction(message)
-		else:	
+		else:
 			for user in SchedulesCog.REGISTER:
-				message = await user.send(embed=embed)
-				SchedulesCog.BUFFER.append(message.id)
-				self.set_reaction(message)
+				user_discord = await self.bot.fetch_user(int(user[0]))
+
+				if user_discord:
+					message = await user_discord.send(embed=embed)
+					SchedulesCog.BUFFER.append(message.id)
+					await self.set_reaction(message)
 			self.printer.change_interval(hours=24)
+		print(SchedulesCog.BUFFER)
 
 	@commands.command()
 	async def askme(self, ctx):
-		await ctx.send("Je t'ajoute à ma liste frero")
-		SchedulesCog.REGISTER.append(ctx.author)
-		#TODO : ADD users to my bdd 
+		
+		# ADD users to my bdd 
+		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
+			await ctx.send("Je te met à jour frero")
+			sql = f"UPDATE Users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
+			self.dbCursor.execute(sql)
+			self.db.commit()
+		elif ctx.author.id in SchedulesCog.REGISTER_ID:
+			await ctx.send("Tu es déjà ajouté fréro")
+		else:
+			await ctx.send("Je t'ajoute à ma liste frero")
+			sql = "INSERT INTO Users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s)"
+			val = (str(ctx.author.id), 0, 1)
+			self.dbCursor.execute(sql, val)
+			self.db.commit()
+			SchedulesCog.REGISTER_ID.append(ctx.author.id)
+			SchedulesCog.REGISTER.append((str(ctx.author.id), 0, 1))
+		print(self.dbCursor.rowcount, "record(s) affected") 
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
+		print("Hello")
 		if reaction.message.id in SchedulesCog.BUFFER and not user.bot:
 			emoji = reaction.emoji
 			await reaction.message.reply("ça fait plaiz poto")

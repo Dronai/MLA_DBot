@@ -3,8 +3,9 @@ import random
 
 class DefaultCog(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot, db):
         self.bot = bot
+        self.db = db
 
     def cog_unload(self):
         self.printer.cancel()
@@ -32,7 +33,7 @@ class DefaultCog(commands.Cog):
         await ctx.send(response)
 
         #get user with his id and send question of mood 
-        await self.bot.get_user(ctx.author.id).send('Lolilol')
+        await self.bot.get_user(ctx.author.id)
         userDro = self.bot.get_user(176264765214162944)
         await userDro.send('Lol \nt\'es ki ?')
 
