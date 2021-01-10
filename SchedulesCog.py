@@ -21,11 +21,11 @@ class SchedulesCog(commands.Cog):
 	HOUR = 21
 	REGISTER = []
 	REGISTER_ID = []
-	FIRSTLOOP = False
 
 	def __init__(self, bot, db):
 		self.bot = bot
 		self.db = db
+		self.firstloop = False
 		self.dbCursor = db.cursor()
 		self.refaced()
 		self.loaduser()
@@ -36,8 +36,8 @@ class SchedulesCog(commands.Cog):
 
 		SchedulesCog.REGISTER_ID.clear()
 
-		SchedulesCog.REGISTER = self.dbCursor.fetchall()
-		for user in SchedulesCog.REGISTER:
+		for user in self.dbCursor.fetchall():
+			SchedulesCog.REGISTER.append([int(user[0]), user[1], user[2]])
 			SchedulesCog.REGISTER_ID.append(int(user[0]))
 
 		print((str(len(SchedulesCog.REGISTER)) + " users load"))
@@ -47,10 +47,10 @@ class SchedulesCog(commands.Cog):
 
 	@tasks.loop(seconds=5.0)
 	async def printer(self):
-		if SchedulesCog.FIRSTLOOP == False:
+		if self.firstloop == False:
 			await self.pomme()
 		else:
-			SchedulesCog.FIRSTLOOP = False
+			self.firstloop = False
 
 	@commands.command()
 	async def pomme(self, ctx=None):
@@ -65,43 +65,73 @@ class SchedulesCog(commands.Cog):
 			await self.set_reaction(message)
 		else:
 			for user in SchedulesCog.REGISTER:
-				user_discord = await self.bot.fetch_user(int(user[0]))
+				user_discord = await self.bot.fetch_user(user[0])
 
 				if user_discord:
 					message = await user_discord.send(embed=embed)
 					SchedulesCog.BUFFER.append(message.id)
 					await self.set_reaction(message)
 			self.printer.change_interval(hours=24)
-		print(SchedulesCog.BUFFER)
 
 	@commands.command()
 	async def askme(self, ctx):
 		
 		# ADD users to my bdd 
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
-			await ctx.send("Je te met à jour frero")
+			await ctx.send("*Je te connais toi non ?*\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
 			sql = f"UPDATE Users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
 			self.dbCursor.execute(sql)
 			self.db.commit()
+			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
+			print(self.dbCursor.rowcount, "record(s) affected")
 		elif ctx.author.id in SchedulesCog.REGISTER_ID:
-			await ctx.send("Tu es déjà ajouté fréro")
+			await ctx.send("Tu es déjà inscit à la demande de Mood quotidienne.")
 		else:
-			await ctx.send("Je t'ajoute à ma liste frero")
-			sql = "INSERT INTO Users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s)"
+			await ctx.send("*On ne se connais pas encore il me semble* ?\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
+			sql = "INSERT INTO Users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
 			val = (str(ctx.author.id), 0, 1)
 			self.dbCursor.execute(sql, val)
 			self.db.commit()
 			SchedulesCog.REGISTER_ID.append(ctx.author.id)
-			SchedulesCog.REGISTER.append((str(ctx.author.id), 0, 1))
-		print(self.dbCursor.rowcount, "record(s) affected") 
+			SchedulesCog.REGISTER.append([str(ctx.author.id), 0, 1])
+			print(self.dbCursor.rowcount, "record(s) affected")
+	
+	def check_emoji(self, em):
+
+		if em == '🥰':
+			return "Amoureux"
+		elif em == '🙂':
+			return "Bonne journée"
+		elif em == '😃':
+			return "Joyeux.se"
+		elif em == '😐':
+			return "Neutre"
+		elif em == '😕':
+			return "Déçu.e"
+		elif em == '😫':
+			return "Epuisé.e"
+		elif em == '🤬':
+			return "Colérique"
+		elif em == '🙁':
+			return "Mauvaise journée"
+		elif em == '😌':
+			return "Zen"
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
-		print("Hello")
-		if reaction.message.id in SchedulesCog.BUFFER and not user.bot:
+		if reaction.message.id in SchedulesCog.BUFFER and not user.bot and user.id in SchedulesCog.REGISTER_ID:
 			emoji = reaction.emoji
-			await reaction.message.reply("ça fait plaiz poto")
-			# TODO: Stocker le mood de la persoone
+			await reaction.message.reply("Ton mood a était prise en compte. Merci !")
+
+			# Stocker le mood de la personne
+			date = datetime.date.today().strftime("%Y-%m-%d")
+			emoj = self.check_emoji(emoji)
+			sql = "INSERT INTO mood VALUES (%s, %s, %s);"
+			val = (user.id, emoj, date)
+			self.dbCursor.execute(sql, val)
+			self.db.commit()
+			print(self.dbCursor.rowcount, "record(s) affected")
+			
 			await reaction.message.delete()
 
 	def refaced(self):

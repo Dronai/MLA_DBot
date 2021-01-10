@@ -29,13 +29,7 @@ class DefaultCog(commands.Cog):
     @commands.command(pass_context = True, name="ping", help='Ping Pong')
     async def ping(self, ctx):
         response = 'Pong !'
-
         await ctx.send(response)
-
-        #get user with his id and send question of mood 
-        await self.bot.get_user(ctx.author.id)
-        userDro = self.bot.get_user(176264765214162944)
-        await userDro.send('Lol \nt\'es ki ?')
 
     @commands.command(pass_context = True, name="Mood")
     async def set_reaction(self, ctx):
