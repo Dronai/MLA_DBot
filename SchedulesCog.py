@@ -52,7 +52,6 @@ class SchedulesCog(commands.Cog):
 		else:
 			self.firstloop = False
 
-	@commands.command(help="Demande votre Mood")
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
 		embed = Embed(title="How are you ?", color=0xe80005, timestamp=datetime.datetime.today())
@@ -179,7 +178,6 @@ class SchedulesCog(commands.Cog):
 		+ "#Commandes Mood\n"
 		+ f"- submood : Vous inscrit au processus\n"
 		+ f"- unsubmood : Vous désinscrit du processus\n"
-		+ f"- askme : Demande à Marie Louise D'Autriche de vous reposer la question.\n"
 		+ f"- moodinfo : Montre ce message"
 		+ f"- rgpd : Donne des informations sur la rgpd"
 		+ "\n#Commandes à venir\n"
