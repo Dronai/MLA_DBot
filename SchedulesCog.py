@@ -114,7 +114,7 @@ class SchedulesCog(commands.Cog):
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0
 			print(self.dbCursor.rowcount, "record(s) affected")
 
-			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :sad:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
+			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :cry:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
 	
 	def check_emoji(self, em):
 		
