@@ -52,12 +52,20 @@ class SchedulesCog(commands.Cog):
 		else:
 			self.firstloop = False
 
+	@commands.command()
+	async def ask(self, ctx):
+		if ctx.author.id == 176264765214162944:
+			print("Demande manuelle")
+			await self.askme()
+		else:
+			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
+
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
 		embed = Embed(title="How are you ?", color=0xe80005, timestamp=datetime.datetime.today())
 		for mood, emoji in SchedulesCog.REACTION.items():
 			embed.add_field(name=mood, value=emoji, inline=True)
-		#TODO : Check if register match bdd users and get it if doesn't match
+		# Check if register match bdd users and get it if doesn't match
 		if _ctx:
 			message = await _ctx.send(embed=embed)
 			SchedulesCog.BUFFER.append(message.id)
@@ -79,16 +87,16 @@ class SchedulesCog(commands.Cog):
 		
 		# ADD users to my bdd 
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
-			await ctx.send("*Je te connais toi non ?*\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
+			await ctx.send("*Je te connait toi non ?*\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
 			sql = f"UPDATE users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
 			self.dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
 			print(self.dbCursor.rowcount, "record(s) affected")
 		elif ctx.author.id in SchedulesCog.REGISTER_ID:
-			await ctx.send("Tu es déjà inscit à la demande de Mood quotidienne.")
+			await ctx.send("Tu es déjà inscrit à la demande de Mood quotidienne.")
 		else:
-			await ctx.send("*On ne se connais pas encore il me semble* ?\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
+			await ctx.send("*On ne se connait pas encore il me semble* ?\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
 			sql = "INSERT INTO users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
 			val = (str(ctx.author.id), 0, 1)
 			self.dbCursor.execute(sql, val)
@@ -106,34 +114,20 @@ class SchedulesCog(commands.Cog):
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0
 			print(self.dbCursor.rowcount, "record(s) affected")
 
-			ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :sad:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
+			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :sad:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
 	
 	def check_emoji(self, em):
-
-		if em == '🥰':
-			return "Amoureux"
-		elif em == '🙂':
-			return "Bonne journée"
-		elif em == '😃':
-			return "Joyeux.se"
-		elif em == '😐':
-			return "Neutre"
-		elif em == '😕':
-			return "Déçu.e"
-		elif em == '😫':
-			return "Epuisé.e"
-		elif em == '🤬':
-			return "Colérique"
-		elif em == '🙁':
-			return "Mauvaise journée"
-		elif em == '😌':
-			return "Zen"
+		
+		for reaction in SchedulesCog.REACTION:
+			if em == SchedulesCog.REACTION[reaction]:
+				return reaction
+		
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
 		if reaction.message.id in SchedulesCog.BUFFER and not user.bot and user.id in SchedulesCog.REGISTER_ID:
 			emoji = reaction.emoji
-			await reaction.message.reply("Ton mood a était prise en compte. Merci !")
+			await reaction.message.reply("Ton mood a était prit en compte. Merci !")
 
 			# Stocker le mood de la personne
 			date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -186,4 +180,10 @@ class SchedulesCog(commands.Cog):
 		
 	@commands.command(help="La RGPD c'est quoi ?")
 	async def rgpd(self, ctx):
-		await ctx.message.reply("Hum... RGPD, c'est à propos de vos données. Des infos ici https://www.cnil.fr/fr/comprendre-le-rgpd\n\n Comment dire que vous données avec moi, Marie-Louise d'Autriche, elles sont stockées dans mon coffre et je ne les vends pas. Il y a surement moyen que je fasse des stats ou d'autres truc un jour avec mais jamais je ne ferais d'argent avec. Don\'t worry\n Si vous voulez tout de même supprimer vos données, faite signe à Dronai#2906 et il fera le nécessaire !")
+		await ctx.message.reply("Hum... RGPD, c'est à propos de vos données. Des infos ici https://www.cnil.fr/fr/comprendre-le-rgpd\n\n Comment dire que vos données avec moi, Marie-Louise d'Autriche, elles sont stockées dans mon coffre et je ne les vends pas."
+		+ "Il y a surement moyen que je fasse des stats ou d'autres truc un jour avec mais jamais je ne ferais d'argent avec. Don\'t worry\n Si vous voulez tout de même supprimer vos données, faite signe à Dronai#2906 et il fera le nécessaire !"
+		+ "\n\n PS: Je stock votre mood à chaque fois que vous l'indiquez et votre ID Discord.")
+
+	@commands.command(help="donne un récapitulatif de votre mood")
+	async def recap(self, ctx):
+		await ctx.send("Cette fonctionnalitée n'est pas encore disponible.")
