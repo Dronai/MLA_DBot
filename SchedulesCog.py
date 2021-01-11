@@ -25,7 +25,7 @@ class SchedulesCog(commands.Cog):
 	def __init__(self, bot, db):
 		self.bot = bot
 		self.db = db
-		self.firstloop = False
+		self.firstloop = True
 		self.dbCursor = db.cursor()
 		self.refaced()
 		self.loaduser()
