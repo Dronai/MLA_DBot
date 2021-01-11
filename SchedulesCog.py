@@ -81,7 +81,7 @@ class SchedulesCog(commands.Cog):
 		# ADD users to my bdd 
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
 			await ctx.send("*Je te connais toi non ?*\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
-			sql = f"UPDATE Users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
+			sql = f"UPDATE users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
 			self.dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
@@ -90,7 +90,7 @@ class SchedulesCog(commands.Cog):
 			await ctx.send("Tu es déjà inscit à la demande de Mood quotidienne.")
 		else:
 			await ctx.send("*On ne se connais pas encore il me semble* ?\nTu viens de t'inscire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
-			sql = "INSERT INTO Users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
+			sql = "INSERT INTO users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
 			val = (str(ctx.author.id), 0, 1)
 			self.dbCursor.execute(sql, val)
 			self.db.commit()
@@ -101,7 +101,7 @@ class SchedulesCog(commands.Cog):
 	@commands.command(help="Vous désinscrit du processus")
 	async def unsubmood(self, ctx):
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] == 1:
-			sql = f"UPDATE Users SET mood_Sub = 0 WHERE id_Discord = {ctx.author.id}"
+			sql = f"UPDATE users SET mood_Sub = 0 WHERE id_Discord = {ctx.author.id}"
 			self.dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0

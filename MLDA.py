@@ -1,4 +1,4 @@
-import os, discord, random, aiocron, mysql.connector
+import os, discord, random, mysql.connector
 from DefaultCog import *
 from SchedulesCog import *
 from dotenv import load_dotenv
