@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from Logger import *
 from discord import Embed
 import datetime, mysql.connector
 
@@ -18,20 +19,21 @@ class SchedulesCog(commands.Cog):
 		}
 
 	BUFFER = []
-	HOUR = 19
+	HOUR = 18
 	REGISTER = []
 	REGISTER_ID = []
+	LOGGER = Logger()
 
 	def __init__(self, bot, db):
 		self.bot = bot
 		self.db = db
 		self.firstloop = True
-		self.dbCursor = db.cursor()
 		self.refaced()
 		self.loaduser()
 
 	def loaduser(self):
 		sql = "SELECT * FROM users"
+		self.dbCursor = self.db.cursor()
 		self.dbCursor.execute(sql)
 
 		SchedulesCog.REGISTER_ID.clear()
@@ -41,12 +43,14 @@ class SchedulesCog(commands.Cog):
 			SchedulesCog.REGISTER_ID.append(int(user[0]))
 
 		print((str(len(SchedulesCog.REGISTER)) + " users load"))
+		SchedulesCog.LOGGER.info((str(len(SchedulesCog.REGISTER)) + " users load"))
 
 	def cog_unload(self):
 		self.printer.cancel()
 
 	@tasks.loop(seconds=5.0)
 	async def printer(self):
+		SchedulesCog.LOGGER.info("Ask Mood auto")
 		if self.firstloop == False:
 			await self.askme()
 		else:
@@ -56,6 +60,7 @@ class SchedulesCog(commands.Cog):
 	async def ask(self, ctx):
 		if ctx.author.id == 176264765214162944:
 			print("Demande manuelle")
+			SchedulesCog.LOGGER.info("Demande de Mood manuelle")
 			await self.askme()
 		else:
 			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
@@ -84,44 +89,48 @@ class SchedulesCog(commands.Cog):
 
 	@commands.command(help="Vous inscrit au processus")
 	async def submood(self, ctx):
-		
-		# ADD users to my bdd 
+		SchedulesCog.LOGGER.info({ctx.author.id} + " s'inscrit du processus")
+
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
-			await ctx.send("*Je te connait toi non ?*\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
-			sql = f"UPDATE users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
-			self.dbCursor.execute(sql)
-			self.db.commit()
-			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
-			print(self.dbCursor.rowcount, "record(s) affected")
+			await self.updateSubUser(ctx)
 		elif ctx.author.id in SchedulesCog.REGISTER_ID:
 			await ctx.send("Tu es déjà inscrit à la demande de Mood quotidienne.")
 		else:
-			await ctx.send("*On ne se connait pas encore il me semble* ?\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
-			sql = "INSERT INTO users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
-			val = (str(ctx.author.id), 0, 1)
-			self.dbCursor.execute(sql, val)
-			self.db.commit()
-			SchedulesCog.REGISTER_ID.append(ctx.author.id)
-			SchedulesCog.REGISTER.append([ctx.author.id, 0, 1])
-			print(self.dbCursor.rowcount, "record(s) affected")
-	
+			await self.addSubUser(ctx)
+
+	async def updateSubUser(self, ctx):
+		await ctx.send("*Je te connait toi non ?*\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
+		sql = f"UPDATE users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
+		self.dbCursor = self.db.cursor()
+		self.dbCursor.execute(sql)
+		self.db.commit()
+		SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
+		print(self.dbCursor.rowcount, "record(s) affected")
+
+	async def addSubUser(self, ctx):
+		await ctx.send("*On ne se connait pas encore il me semble* ?\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
+		sql = "INSERT INTO users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
+		val = (str(ctx.author.id), 0, 1)
+		self.dbCursor = self.db.cursor()
+		self.dbCursor.execute(sql, val)
+		self.db.commit()
+		SchedulesCog.REGISTER_ID.append(ctx.author.id)
+		SchedulesCog.REGISTER.append([ctx.author.id, 0, 1])
+		print(self.dbCursor.rowcount, "record(s) affected")
+
 	@commands.command(help="Vous désinscrit du processus")
 	async def unsubmood(self, ctx):
+		SchedulesCog.LOGGER.info(str(ctx.author.id) + " se désinscrit du processus")
+
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] == 1:
 			sql = f"UPDATE users SET mood_Sub = 0 WHERE id_Discord = {ctx.author.id}"
+			self.dbCursor = self.db.cursor()
 			self.dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0
 			print(self.dbCursor.rowcount, "record(s) affected")
 
 			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :cry:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
-	
-	def check_emoji(self, em):
-		
-		for reaction in SchedulesCog.REACTION:
-			if em == SchedulesCog.REACTION[reaction]:
-				return reaction
-		
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
@@ -134,6 +143,7 @@ class SchedulesCog(commands.Cog):
 			emoj = self.check_emoji(emoji)
 			sql = "INSERT INTO mood VALUES (%s, %s, %s);"
 			val = (user.id, emoj, date)
+			self.dbCursor = self.db.cursor()
 			self.dbCursor.execute(sql, val)
 			self.db.commit()
 			print(self.dbCursor.rowcount, "record(s) affected")
@@ -148,6 +158,7 @@ class SchedulesCog(commands.Cog):
 		delta = self.time_until(next_call)  
 
 		try:
+			SchedulesCog.LOGGER.info("Prochaine loop " + str(delta))
 			# Change interval will only take action at the next loop
 			self.printer.change_interval(seconds=delta)
 			self.printer.start()
@@ -165,6 +176,12 @@ class SchedulesCog(commands.Cog):
 		for emoji in SchedulesCog.REACTION.values():
 			await message.add_reaction(emoji)
 
+	def check_emoji(self, em):
+		
+		for reaction in SchedulesCog.REACTION:
+			if em == SchedulesCog.REACTION[reaction]:
+				return reaction
+		
 	@commands.command(pass_context = True, help="va vous donner les commandes concernant le processus de Mood !")
 	async def moodinfo(self, ctx):
 		await ctx.message.reply("L'expérience Mood a pour but de vous demander votre état sur la journée à 19h00 (GMT+1)\n"

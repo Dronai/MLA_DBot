@@ -1,6 +1,6 @@
 # MLA_DBot
   
-	Marie Louise d'Autriche Bot Discord
+ Marie Louise d'Autriche Bot Discord
 
 ## Introduction
 
@@ -58,8 +58,8 @@ In your terminal use this differents command if you have change your repository
 ## Roadmap
 
 - Module Mood
-	- Add recap function
+  - Add recap function
 - Module Birthday
-	- add date
-	- create loop task
-	- add requests sql
+  - add date
+  - create loop task
+  - add requests sql
