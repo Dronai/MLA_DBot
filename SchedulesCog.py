@@ -102,7 +102,7 @@ class SchedulesCog(commands.Cog):
 			self.dbCursor.execute(sql, val)
 			self.db.commit()
 			SchedulesCog.REGISTER_ID.append(ctx.author.id)
-			SchedulesCog.REGISTER.append([str(ctx.author.id), 0, 1])
+			SchedulesCog.REGISTER.append([ctx.author.id, 0, 1])
 			print(self.dbCursor.rowcount, "record(s) affected")
 	
 	@commands.command(help="Vous désinscrit du processus")
