@@ -19,7 +19,7 @@ class SchedulesCog(commands.Cog):
 		}
 
 	BUFFER = []
-	HOUR = 18
+	HOUR = 19
 	REGISTER = []
 	REGISTER_ID = []
 	LOGGER = Logger()
