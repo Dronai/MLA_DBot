@@ -62,7 +62,7 @@ class SchedulesCog(commands.Cog):
 		if ctx.author.id == 176264765214162944:
 			print("Demande manuelle")
 			SchedulesCog.LOGGER.info("Demande de Mood manuelle")
-			await self.askme()
+			await self.askme(ctx)
 		else:
 			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
 
