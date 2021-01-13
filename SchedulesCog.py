@@ -74,7 +74,7 @@ class SchedulesCog(commands.Cog):
 		elif(SchedulesCog.AUTHORIZATION_LAMBDA):
 			await self.askme(ctx)
 		else:
-			ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
+			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
 
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
@@ -152,7 +152,7 @@ class SchedulesCog(commands.Cog):
 			# Checking 
 			emoji = reaction.emoji
 			date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-			if ((emoj := self.check_emoji(emoji)) != None):
+			if ((emoj := self.check_emoji(emoji)) == None):
 				await reaction.message.channel.send("Tu as utiliser une emoji qui n'est pas encore disponible.")
 			# Stocker le mood de la personne
 			sql = "INSERT INTO mood VALUES (%s, %s, %s);"
