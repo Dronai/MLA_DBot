@@ -24,6 +24,7 @@ class SchedulesCog(commands.Cog):
 	REGISTER_ID = []
 	LOGGER = Logger()
 	NEXT_LOOP = []
+	AUTHORIZATION_LAMBDA = False
 
 	def __init__(self, bot, db):
 		self.bot = bot
@@ -56,6 +57,12 @@ class SchedulesCog(commands.Cog):
 			await self.askme()
 		else:
 			self.firstloop = False
+	
+	@commands.command()
+	async def authorizeAskme(self, ctx):
+		if ctx.author.id == 176264765214162944:
+			print("Demande manuelle autorisé pour les utilisateurs.")
+			await self.askme()
 
 	@commands.command()
 	async def ask(self, ctx):
@@ -63,8 +70,10 @@ class SchedulesCog(commands.Cog):
 			print("Demande manuelle")
 			SchedulesCog.LOGGER.info("Demande de Mood manuelle")
 			await self.askme()
-		else:
+		elif(SchedulesCog.AUTHORIZATION_LAMBDA):
 			await self.askme(ctx)
+		else:
+			ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
 
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
