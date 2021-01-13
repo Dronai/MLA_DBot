@@ -62,9 +62,9 @@ class SchedulesCog(commands.Cog):
 		if ctx.author.id == 176264765214162944:
 			print("Demande manuelle")
 			SchedulesCog.LOGGER.info("Demande de Mood manuelle")
-			await self.askme(ctx)
+			await self.askme()
 		else:
-			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
+			await self.askme(ctx)
 
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
@@ -73,7 +73,7 @@ class SchedulesCog(commands.Cog):
 			embed.add_field(name=mood, value=emoji, inline=True)
 		# Check if register match bdd users and get it if doesn't match
 		if _ctx:
-			message = await _ctx.send(embed=embed)
+			message = await _ctx.author.send(embed=embed)
 			SchedulesCog.BUFFER.append(message.id)
 			await self.set_reaction(message)
 		else:
