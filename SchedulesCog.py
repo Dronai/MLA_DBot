@@ -24,6 +24,7 @@ class SchedulesCog(commands.Cog):
 	REGISTER_ID = []
 	LOGGER = Logger()
 	NEXT_LOOP = []
+	AUTHORIZATION_LAMBDA = False
 
 	def __init__(self, bot, db):
 		self.bot = bot
@@ -36,13 +37,13 @@ class SchedulesCog(commands.Cog):
 		sql = "SELECT * FROM users"
 		self.dbCursor = self.db.cursor()
 		self.dbCursor.execute(sql)
-
+		# Clean storage
 		SchedulesCog.REGISTER_ID.clear()
-
+		# Initialize storage
 		for user in self.dbCursor.fetchall():
 			SchedulesCog.REGISTER.append([int(user[0]), user[1], user[2]])
 			SchedulesCog.REGISTER_ID.append(int(user[0]))
-
+		#DUMP
 		print((str(len(SchedulesCog.REGISTER)) + " users load"))
 		SchedulesCog.LOGGER.info((str(len(SchedulesCog.REGISTER)) + " users load"))
 
@@ -56,6 +57,13 @@ class SchedulesCog(commands.Cog):
 			await self.askme()
 		else:
 			self.firstloop = False
+	
+	@commands.command()
+	async def authorizeAskme(self, ctx):
+		""" Permet à l'administrateur d'autoriser les demandes utilisateurs askme manuelle sur soi-même uniquement. """
+		if ctx.author.id == 176264765214162944:
+			print("Demande manuelle autorisé pour les utilisateurs.")
+			SchedulesCog.AUTHORIZATION_LAMBDA = not SchedulesCog.AUTHORIZATION_LAMBDA
 
 	@commands.command()
 	async def ask(self, ctx):
@@ -63,17 +71,21 @@ class SchedulesCog(commands.Cog):
 			print("Demande manuelle")
 			SchedulesCog.LOGGER.info("Demande de Mood manuelle")
 			await self.askme()
+		elif(SchedulesCog.AUTHORIZATION_LAMBDA):
+			await self.askme(ctx)
 		else:
 			await ctx.send("Tu n'as pas la permission de faire cette commande. Désolé !")
 
 	async def askme(self, ctx=None):
 		_ctx = None or ctx
 		embed = Embed(title="How are you ?", color=0xe80005, timestamp=datetime.datetime.today())
+		# Adding all the emoji in REACTION
+		# TODO : Create an mood object containing every information about the processing 
 		for mood, emoji in SchedulesCog.REACTION.items():
 			embed.add_field(name=mood, value=emoji, inline=True)
 		# Check if register match bdd users and get it if doesn't match
 		if _ctx:
-			message = await _ctx.send(embed=embed)
+			message = await _ctx.author.send(embed=embed)
 			SchedulesCog.BUFFER.append(message.id)
 			await self.set_reaction(message)
 		else:
@@ -105,7 +117,8 @@ class SchedulesCog(commands.Cog):
 		self.dbCursor = self.db.cursor()
 		self.dbCursor.execute(sql)
 		self.db.commit()
-		SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
+		if((index := SchedulesCog.REGISTER_ID.index(ctx.author.id))):
+			SchedulesCog.REGISTER[index][2] = 1
 		print(self.dbCursor.rowcount, "record(s) affected")
 
 	async def addSubUser(self, ctx):
@@ -122,45 +135,45 @@ class SchedulesCog(commands.Cog):
 	@commands.command(help="Vous désinscrit du processus")
 	async def unsubmood(self, ctx):
 		SchedulesCog.LOGGER.info(str(ctx.author.id) + " se désinscrit du processus")
-
+		# Check if Author was actually registered, and active
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] == 1:
 			sql = f"UPDATE users SET mood_Sub = 0 WHERE id_Discord = {ctx.author.id}"
 			self.dbCursor = self.db.cursor()
 			self.dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0
+			#DUMP
 			print(self.dbCursor.rowcount, "record(s) affected")
-
 			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :cry:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
 		if reaction.message.id in SchedulesCog.BUFFER and not user.bot and user.id in SchedulesCog.REGISTER_ID:
+			# Checking 
 			emoji = reaction.emoji
-			await reaction.message.reply("Ton mood a était prit en compte. Merci !")
-
-			# Stocker le mood de la personne
 			date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-			emoj = self.check_emoji(emoji)
+			if ((emoj := self.check_emoji(emoji)) == None):
+				await reaction.message.channel.send("Tu as utiliser une emoji qui n'est pas encore disponible.")
+			# Stocker le mood de la personne
 			sql = "INSERT INTO mood VALUES (%s, %s, %s);"
 			val = (user.id, emoj, date)
 			self.dbCursor = self.db.cursor()
 			self.dbCursor.execute(sql, val)
 			self.db.commit()
 			print(self.dbCursor.rowcount, "record(s) affected")
-			
+			# Reply with information then delete embed to keep the feed clean
+			await reaction.message.reply("Ton mood a était prit en compte. Merci !")
 			await reaction.message.delete()
 
 	def refaced(self):
-		hour = SchedulesCog.HOUR
-		
+		_hour = SchedulesCog.HOUR
+		# Generating date for the next call
 		next_call = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
-		next_call = next_call.replace(hour=hour, minute=0, second=0)
+		next_call = next_call.replace(hour=_hour, minute=0, second=0)
 		delta = self.time_until(next_call)  
-
+		# Change interval will only take action at the next loop
 		try:
 			SchedulesCog.LOGGER.info("Prochaine loop " + str(delta))
-			# Change interval will only take action at the next loop
 			self.printer.change_interval(seconds=delta)
 			self.printer.start()
 			SchedulesCog.NEXT_LOOP.append(["mood", datetime.datetime.now(), delta])
@@ -171,7 +184,6 @@ class SchedulesCog(commands.Cog):
 	async def nextLoop(self, ctx):
 		next_call = datetime.datetime.now() + datetime.timedelta(seconds=SchedulesCog.NEXT_LOOP[0][2])
 		SchedulesCog.LOGGER.info("Next iteration: " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
-
 		await ctx.message.reply("Prochaine demande de Mood le : " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
 
 	def time_until(self, when) -> float:
@@ -186,7 +198,6 @@ class SchedulesCog(commands.Cog):
 			await message.add_reaction(emoji)
 
 	def check_emoji(self, em):
-		
 		for reaction in SchedulesCog.REACTION:
 			if em == SchedulesCog.REACTION[reaction]:
 				return reaction
