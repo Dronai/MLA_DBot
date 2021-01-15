@@ -182,9 +182,10 @@ class SchedulesCog(commands.Cog):
 
 	@commands.command(help="Affiche l'heure de la prochaine demande de Mood")
 	async def nextLoop(self, ctx):
-		next_call = datetime.datetime.now() + datetime.timedelta(seconds=SchedulesCog.NEXT_LOOP[0][2])
-		SchedulesCog.LOGGER.info("Next iteration: " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
-		await ctx.message.reply("Prochaine demande de Mood le : " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
+		next_call = (SchedulesCog.NEXT_LOOP[0][1] + datetime.timedelta(seconds=SchedulesCog.NEXT_LOOP[0][2]))
+		print(next_call)
+		#SchedulesCog.LOGGER.info("Next iteration: " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
+		#await ctx.message.reply("Prochaine demande de Mood le : " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
 
 	def time_until(self, when) -> float:
 		if when.tzinfo is None:

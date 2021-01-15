@@ -20,7 +20,7 @@ mydb = mysql.connector.connect(
     database=os.getenv('MY_SQL_DATABASE')
 )
 
-bot = commands.Bot(command_prefix='??', intents=intents)
+bot = commands.Bot(command_prefix='!!', intents=intents)
 
 
 @bot.event
