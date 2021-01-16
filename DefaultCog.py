@@ -14,3 +14,8 @@ class DefaultCog(commands.Cog):
     async def ping(self, ctx):
         response = 'Pong !'
         await ctx.send(response)
+
+    @commands.command(pass_context = True)
+    async def ping_db(self, ctx):
+        print("Database connected : " + str(self.db.is_connected()))
+        await ctx.message.reply("Database connected : " + str(self.db.is_connected()))

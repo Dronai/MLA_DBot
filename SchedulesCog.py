@@ -65,7 +65,7 @@ class SchedulesCog(commands.Cog):
 			print("Demande manuelle autorisé pour les utilisateurs.")
 			SchedulesCog.AUTHORIZATION_LAMBDA = not SchedulesCog.AUTHORIZATION_LAMBDA
 
-	@commands.command()
+	@commands.command(help="Demande au bot de vous reposer la question du Mood")
 	async def ask(self, ctx):
 		if ctx.author.id == 176264765214162944:
 			print("Demande manuelle")
@@ -204,14 +204,15 @@ class SchedulesCog(commands.Cog):
 			if em == SchedulesCog.REACTION[reaction]:
 				return reaction
 		
-	@commands.command(pass_context = True, help="va vous donner les commandes concernant le processus de Mood !")
+	@commands.command(pass_context = True, help="Va vous donner les commandes concernant le processus de Mood !")
 	async def moodinfo(self, ctx):
 		await ctx.message.reply("L'expérience Mood a pour but de vous demander votre état sur la journée à 19h00 (GMT+1)\n"
 		+ "```md\n"
 		+ "#Commandes Mood\n"
 		+ f"- submood : Vous inscrit au processus\n"
 		+ f"- unsubmood : Vous désinscrit du processus\n"
-		+ f"- moodinfo : Montre ce message"
+		+ f"- ask : Si vous avez la permission, vous pourrez demander à {self.bot.name}"
+		+ f"- moodinfo : Montre ce message\n"
 		+ f"- rgpd : Donne des informations sur la rgpd"
 		+ "\n#Commandes à venir\n"
 		+ f"- recap : Vous donne un récapitulatif de votre mood. (La façon de transmettre le récap n\'est pas encore déterminé\n"
@@ -223,7 +224,7 @@ class SchedulesCog(commands.Cog):
 		+ "Il y a surement moyen que je fasse des stats ou d'autres truc un jour avec mais jamais je ne ferais d'argent avec. Don\'t worry\n Si vous voulez tout de même supprimer vos données, faite signe à Dronai#2906 et il fera le nécessaire !"
 		+ "\n\n PS: Je stock votre mood à chaque fois que vous l'indiquez et votre ID Discord.")
 
-	@commands.command(help="donne un récapitulatif de votre mood")
+	@commands.command(help="Donne un récapitulatif de votre mood")
 	async def recap(self, ctx):
 		await ctx.send("Cette fonctionnalitée n'est pas encore disponible.")
 
