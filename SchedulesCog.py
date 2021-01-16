@@ -35,12 +35,12 @@ class SchedulesCog(commands.Cog):
 
 	def loaduser(self):
 		sql = "SELECT * FROM users"
-		self.dbCursor = self.db.cursor()
-		self.dbCursor.execute(sql)
+		dbCursor = self.db.cursor()
+		dbCursor.execute(sql)
 		# Clean storage
 		SchedulesCog.REGISTER_ID.clear()
 		# Initialize storage
-		for user in self.dbCursor.fetchall():
+		for user in dbCursor.fetchall():
 			SchedulesCog.REGISTER.append([int(user[0]), user[1], user[2]])
 			SchedulesCog.REGISTER_ID.append(int(user[0]))
 		#DUMP
@@ -114,23 +114,23 @@ class SchedulesCog(commands.Cog):
 	async def updateSubUser(self, ctx):
 		await ctx.send("*Je te connait toi non ?*\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h00 (GMT+1)")
 		sql = f"UPDATE users SET mood_Sub = 1 WHERE id_Discord = {ctx.author.id}"
-		self.dbCursor = self.db.cursor()
-		self.dbCursor.execute(sql)
+		dbCursor = self.db.cursor()
+		dbCursor.execute(sql)
 		self.db.commit()
 		SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
 			
-		print(self.dbCursor.rowcount, "record(s) affected")
+		print(dbCursor.rowcount, "record(s) affected")
 
 	async def addSubUser(self, ctx):
 		await ctx.send("*On ne se connait pas encore il me semble* ?\nTu viens de t'inscrire à la demande de Mood.\n Cette question te sera posée tous les jours à 19h30 (GMT+1)")
 		sql = "INSERT INTO users (id_Discord, birthday_Sub, mood_Sub) VALUES (%s, %s, %s);"
 		val = (str(ctx.author.id), 0, 1)
-		self.dbCursor = self.db.cursor()
-		self.dbCursor.execute(sql, val)
+		dbCursor = self.db.cursor()
+		dbCursor.execute(sql, val)
 		self.db.commit()
 		SchedulesCog.REGISTER_ID.append(ctx.author.id)
 		SchedulesCog.REGISTER.append([ctx.author.id, 0, 1])
-		print(self.dbCursor.rowcount, "record(s) affected")
+		print(dbCursor.rowcount, "record(s) affected")
 
 	@commands.command(help="Vous désinscrit du processus")
 	async def unsubmood(self, ctx):
@@ -138,12 +138,12 @@ class SchedulesCog(commands.Cog):
 		# Check if Author was actually registered, and active
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] == 1:
 			sql = f"UPDATE users SET mood_Sub = 0 WHERE id_Discord = {ctx.author.id}"
-			self.dbCursor = self.db.cursor()
-			self.dbCursor.execute(sql)
+			dbCursor = self.db.cursor()
+			dbCursor.execute(sql)
 			self.db.commit()
 			SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 0
 			#DUMP
-			print(self.dbCursor.rowcount, "record(s) affected")
+			print(dbCursor.rowcount, "record(s) affected")
 			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :cry:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
 		else: 
 			await ctx.message.reply("Tu n'es actuellement pas inscrit. Cette commande n'a pas eu d'effet.")
@@ -159,10 +159,10 @@ class SchedulesCog(commands.Cog):
 			# Stocker le mood de la personne
 			sql = "INSERT INTO mood VALUES (%s, %s, %s);"
 			val = (user.id, emoj, date)
-			self.dbCursor = self.db.cursor()
-			self.dbCursor.execute(sql, val)
+			dbCursor = self.db.cursor()
+			dbCursor.execute(sql, val)
 			self.db.commit()
-			print(self.dbCursor.rowcount, "record(s) affected")
+			print(dbCursor.rowcount, "record(s) affected")
 			# Reply with information then delete embed to keep the feed clean
 			await reaction.message.reply("Ton mood a été prit en compte. Merci !")
 			await reaction.message.delete()
