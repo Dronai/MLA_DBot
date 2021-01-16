@@ -30,7 +30,7 @@ class SchedulesCog(commands.Cog):
 		self.bot = bot
 		self.db = db
 		self.firstloop = True
-		self.refaced()
+		self.time_until_v2()
 		self.loaduser()
 
 	def loaduser(self):
@@ -98,11 +98,11 @@ class SchedulesCog(commands.Cog):
 						SchedulesCog.BUFFER.append(message.id)
 						await self.set_reaction(message)
 
-			self.printer.change_interval(hours=24)
+			self.time_until_v2()
 
 	@commands.command(help="Vous inscrit au processus")
 	async def submood(self, ctx):
-		SchedulesCog.LOGGER.info({ctx.author.id} + " s'inscrit du processus")
+		SchedulesCog.LOGGER.info(str({ctx.author.id}) + " s'inscrit du processus")
 
 		if ctx.author.id in SchedulesCog.REGISTER_ID and SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] != 1:
 			await self.updateSubUser(ctx)
@@ -117,8 +117,8 @@ class SchedulesCog(commands.Cog):
 		self.dbCursor = self.db.cursor()
 		self.dbCursor.execute(sql)
 		self.db.commit()
-		if((index := SchedulesCog.REGISTER_ID.index(ctx.author.id))):
-			SchedulesCog.REGISTER[index][2] = 1
+		SchedulesCog.REGISTER[SchedulesCog.REGISTER_ID.index(ctx.author.id)][2] = 1
+			
 		print(self.dbCursor.rowcount, "record(s) affected")
 
 	async def addSubUser(self, ctx):
@@ -145,6 +145,8 @@ class SchedulesCog(commands.Cog):
 			#DUMP
 			print(self.dbCursor.rowcount, "record(s) affected")
 			await ctx.message.reply(f"Vous venez de vous désinscrire du processus de Mood :cry:\n Vous pouvez toujours vous réinscrire avec la commande {self.bot.command_prefix}submood !")
+		else: 
+			await ctx.message.reply("Tu n'es actuellement pas inscrit. Cette commande n'a pas eu d'effet.")
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
@@ -162,7 +164,7 @@ class SchedulesCog(commands.Cog):
 			self.db.commit()
 			print(self.dbCursor.rowcount, "record(s) affected")
 			# Reply with information then delete embed to keep the feed clean
-			await reaction.message.reply("Ton mood a était prit en compte. Merci !")
+			await reaction.message.reply("Ton mood a été prit en compte. Merci !")
 			await reaction.message.delete()
 
 	def refaced(self):
@@ -183,9 +185,8 @@ class SchedulesCog(commands.Cog):
 	@commands.command(help="Affiche l'heure de la prochaine demande de Mood")
 	async def nextLoop(self, ctx):
 		next_call = (SchedulesCog.NEXT_LOOP[0][1] + datetime.timedelta(seconds=SchedulesCog.NEXT_LOOP[0][2]))
-		print(next_call)
-		#SchedulesCog.LOGGER.info("Next iteration: " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
-		#await ctx.message.reply("Prochaine demande de Mood le : " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
+		SchedulesCog.LOGGER.info("Next iteration: " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
+		await ctx.message.reply("Prochaine demande de Mood le : " + str(next_call.strftime("%d-%m-%Y à %H:%M:%S")))
 
 	def time_until(self, when) -> float:
 		if when.tzinfo is None:
@@ -225,3 +226,28 @@ class SchedulesCog(commands.Cog):
 	@commands.command(help="donne un récapitulatif de votre mood")
 	async def recap(self, ctx):
 		await ctx.send("Cette fonctionnalitée n'est pas encore disponible.")
+
+	def time_until_v2(self):
+		_heure = SchedulesCog.HOUR
+		dateNow = datetime.datetime.now()
+
+		if dateNow.hour < _heure:
+			#Before
+			print("Avant " + str(_heure))
+			next_call = dateNow.replace(hour=_heure, minute=0, second=0)
+		elif dateNow.hour >= _heure:
+			#After
+			print("After " + str(_heure))
+			next_call = dateNow.replace(day=dateNow.day +1 ,hour=_heure, minute=0, second=0)
+		
+		#Calcul difference between two dates
+		delta = (next_call - dateNow).total_seconds()
+		print(str(delta) + " time before next loop")
+
+		try:
+			SchedulesCog.LOGGER.info("Prochaine loop " + str(delta))
+			self.printer.change_interval(seconds=delta)
+			self.printer.start()
+			SchedulesCog.NEXT_LOOP.append(["mood", datetime.datetime.now(), delta])
+		except Exception as e:
+			print(e)
